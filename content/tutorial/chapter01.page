@@ -1,0 +1,199 @@
+---
+section: Tutorial
+chapter: 1
+title: Introducing Rake
+filter:
+  - erb
+  - textile
+  - coderay
+---
+<% require 'lib/extras' -%>
+
+h2. Chapter <%= @page.chapter %> -- <%= @page.title %>
+
+h3. Getting Started
+
+p(. <b>Received via EMail:</b>
+
+p(. <em>I have just started using the excellent Rake tool (thanks,
+Jim!) and I am at a bit of a loss on how to proceed.  I am attempting
+to create unit test for some C++ code I am creating, [...]</em>
+
+Several people recently have made similar comments, they really like
+@rake@, but have had trouble getting started.  Although the Rake
+documentation is fairly complete, it really does assume you are
+familiar with other build tools such as @ant@ and @make@.  It is not
+really material for the newbie.
+
+This tutorial is an attempt to adderess this lack.  We will start with
+a very simple problem: _Building a Simple C Program_.
+
+h3. The Problem
+
+We will start with a very simple build problem, the type of problem
+that make (and now rake) was desiged to deal with.
+
+Suppose I have a very simple C program consisting of the following files.
+
+
+<%= code "content/tutorial/code/01", "main.c", :lang=>"c" %>
+
+<%= code "content/tutorial/code/01", "greet.h", :lang=>"c" %>
+
+<%= code "content/tutorial/code/01", "greet.c", :lang=>"c" %>
+
+(Yes, it really is the old standard "Hello, World" program.  I did say
+we were starting with the basics!)
+
+To compile and run this collection of files, a simple shell script
+like the following is adequate.
+
+<%= code "content/tutorial/code/01", "build.sh", :lang=>"sh" %>
+
+p((. <em>For those not familiar with compiling C code, the +cc+
+command is the C compiler.  It generates an output file (specified by
+the <tt>-o</tt> flag) from the source files listed on the command
+line.  </em>
+  
+Running it gives us the following results ...
+
+<%= code "content/tutorial/code/01", "output1.txt", :lang => "none" %>
+
+h3. Building C Programs
+
+Compiling C programs is really a two step process.  First you compile
+all the source code file into object files.  Then you take all the
+object files and link them together to make the executable.
+
+!>.http://docs.rubyrake.org/images/tutorial/c_files.png(File Dependencies)!
+
+The following figure illustrates the progression from source files to
+object files to executable program.
+
+Our program is so small that there is little benefit in doing more
+than the three line build script above.  However, as projects grow,
+there are more and more source files and object files to
+manage. Recompiling everything for a simple one line change in a
+single source file gets old quickly.  It is much more efficient to
+just recompile the few files that change and then relink.
+
+But how do we know what to recompile?  Keeping track of that would be
+quite error prone if we tried to do that by hand.  Here is where Rake
+become useful.
+
+h3. File Dependencies
+
+First, lets take a look at when files need to be recompiled.  Consider
+the <tt>main.o</tt>.  Obviously if the <tt>main.c</tt> file changes,
+then we need to rebuild <tt>main.o</tt>.  But are the other files that
+can trigger a recompile of <tt>main.o</tt>?
+
+Actually, yes.  Looking at the source of <tt>main.c</tt>, we see that
+it includes the header file <tt>greet.h</tt>.  That means any changes
+in <tt>greet.h</tt> could possibly effect the <tt>main.o</tt> file as
+well.
+
+We say that <tt>main.o</tt> has a dependency on the files
+<tt>main.c</tt> and <tt>greet.h</tt>.  We can capture this dependency
+in Rake with the following line:
+
+<%= code "content/tutorial/code/01", "Rakefile1", :title => "Rakefile Fragement" %>
+
+The rake dependency declaration is just regular Ruby code.  We take
+advantage of the fact that we can construct hash arguments on the fly,
+and that Ruby doesn't require parenthesis around the method arguement
+to create a file task declaration that reads very naturally to the
+humans reading the rake file.  But its still just Ruby code.
+
+Likewise, we can declare the dependencies for creating the "greet.o" file as well.
+
+<%= code "content/tutorial/code/01", "Rakefile2", :title => "Rakefile Fragement" %>
+
+@greet.c@ does include @stdio.h@, but since that is a system header
+file and not subject to change (often), we can leave itout of the
+dependency list.
+
+Finally we can declare the dependencies for the executable program
+@hello@.  It just depends on the two object files.
+
+<%= code "content/tutorial/code/01", "Rakefile3", :title => "Rakefile Fragement" %>
+
+Notice that we only have to declare the direct dependencies of
+<tt>hello</tt>.  Yes, <tt>hello</tt> depends on <tt>main.o</tt> which
+in turn depends on <tt>main.c</tt>.  But the <tt>.c</tt> files are not
+directly used in building <tt>hello</tt>, so they can safely be
+omitted from the list.
+
+h3. Building the Files
+
+We have carefully specified how the files are related.  Now we need to
+say what Rake would have to do to build the files when needed.
+
+This part is pretty simple.  The three line build script that we
+started with contains all the commands needed to build the program. We
+just need to put those actions with the right set of dependencies. Use
+a Ruby *do* / *end* block to capture actions ...
+
+The result looks like this:
+
+*Rakefile*
+<%= code "content/tutorial/code/01", "Rakefile" %>
+
+h3. Trying it out
+
+So, let's see if it works!
+
+<%= code "content/tutorial/code/01", "output2.txt", :title => "Output", :lang => "none" %>
+
+The command line <tt>rake hello</tt> instructs rake to look through
+its list of tasks and find one called "hello".  It then checks hello's
+dependencies and builds them if required.  Finally, when everything is
+ready it builds <tt>hello</tt> by executing the C compiler command.
+
+Rake dutifully reports what it is doing as it goes along.  We can see
+that each compiler invocation is done in the correct order, building
+the main program at the end.  So, does the program work?  Let's find
+out.
+
+*Output*
+{includeFile: {filename: code/01/output3.txt, highlight: plaintext, escapeHTML: false}}
+
+Success!
+
+But what happens when we change a file.  Lets change the greet
+function in <tt>greet.c</tt> to print "Hi" instead of hello.
+
+*Output*
+{includeFile: {filename: code/01/output4.txt, highlight: plaintext, escapeHTML: false}}
+
+Notice that it recompiles greet.c making a new greet.o.  And then it
+needs to relink hello with the new greet.o.  Then it is done.  There
+is no need to recompile main.c since it never changed.
+
+What do you think will happend if we run Rake again?
+
+*Output*
+{includeFile: {filename: code/01/output5.txt, highlight: plaintext, escapeHTML: false}}
+
+That's right ... nothing.  Everything is up to date with its
+dependencies, so there is no work for Rake to do.
+
+Ok, sure.  Rake is a bit of overkill for only two source files and a
+header.  But imagine a large project with hundreds of files and
+dependencies.  All of a sudden, a tool like Rake becomes very
+attractive.
+
+h3. Summary
+
+What have we learned?  Building a Rakefile involves identifying
+dependencies and the actions required to create the target files. Then
+declaring the dependencies and actions are as simple as writing them
+down in standard Ruby code.  Rake then handles the details of building
+
+h3. What's Up Next
+
+We notice that even our small example has a bit of duplication in
+it. We have specify how to compile both C file separately, even though
+the only difference is the files that are used.  The next installment
+will look at fixing that problem as well as introduce non-file based
+tasks, rules and file lists.

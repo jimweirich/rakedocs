@@ -1,0 +1,319 @@
+---
+title: 01 -- Maintaining CVS Passwords
+inMenu: true
+---
+
+h2. Chapter 1 -- Maintaining CVS Passwords
+
+
+h3. Introduction
+
+This is a very simple real world example of using rake to automate tasks.  The task is a simplified example of a small task I do at work.
+
+h3. Task Description
+
+Each user of a CVS system needs an entry in a file named "passwd" in the CVSROOT directory of the repository.  Each line of this passwd file is formatted:
+
+  username:password:effectiveuser
+
+The password should be unix-style encrypted.  The effective user is what the CVS server runs as when updating the archives.  This will be "cvs" in our case.
+
+The input will be a list of user names that are active in the CVS repository.  We will get the passwords from the system (everybody uses their unix passwords for CVS access).  The output will be a CVS passwd file uploaded to the correct place in the repository.
+
+Oh, I forgot to mention.  We actually have three repositories.  The same passwd file will be delivered to all repositories (just to keep things simple).
+
+h3. Building the Rakefile
+
+We will now build the Rakefile to accomplish the above task.  We will do it in small steps, describing each option as we us it. 
+
+h3. Step 1: Creating the passwd File
+
+We will attack the creation of the passwd file first.  Later we will worry about deployment to the repositories.  So, in our Rakefile, we create a file task entry named "passwd".  This says the goal of this task is to create a file name "passwd".  The contents of "passwd" depend on the contents of a file containing a list of our users.  Let's call this file "userlist".
+
+Here is the skeleton of the entry.
+
+  file "passwd" => ["userlist"] do
+    # code to create the passwd file
+  end
+
+Now we just write the Ruby code that will generate our passwd file.  For now, assume I have a <tt>read_users</tt> function that will read the userlist file, and a function named <tt>read_passwords</tt> that returns a hash of passwords indexed by user name.  
+
+Our Rakefile now looks like
+
+<pre>
+file "passwd" => ["userlist"] do
+  passwords = read_passwords
+  users = read_users("userlist")
+  open("passwd", "w") do |outs|
+    users.each do |user|
+      outs.puts "#{user}:#{passwords[user]}:cvs"
+    end
+  end
+end
+</pre>
+
+As you can see, the body of our rake task (the stuff between <b>do</b> and <b>end</b>) is just normal Ruby code.
+
+To complete this first step we need to provide the functions <tt>read_users</tt> and <tt>read_password</tt>.  Read_users is straight forward.  <tt>read_passwords</tt> may vary depending on how your system stores passwords.  In this example, I just read the /etc/passwd file.  Most likely this won't work on your system for several reasons.  Your passwords may be in a shadow password file (a good move on the part of your system administrator), or you may be on a large network where passwords are kept on an NIST server somewhere.  In the later case you can run ypcat to read the passwords.
+
+Ok, here is the complete Rakefile up to this point.
+
+<pre>
+# -*- ruby -*-
+
+def read_passwords
+  result = {}
+  open("/etc/passwd") do |ins|
+    ins.each do |line|
+      user, pw, *rest = line.split(":")
+      result[user] = pw
+    end
+  end
+  result
+end
+
+def read_users(filename)
+  open(filename) do |ins| ins.collect { |line| line.chomp } end
+end
+
+file "passwd" => ["userlist"] do
+  passwords = read_passwords
+  users = read_users("userlist")
+  open("passwd", "w") do |outs|
+    users.each do |user|
+      outs.puts "#{user}:#{passwords[user]}:cvs"
+    end
+  end
+end
+</pre>
+
+To run our Rakefile, just type rake and the task name you wish to execute:
+
+  rake passwd
+
+You should have a "passwd" file in your local directory.
+
+  $ ls
+  Rakefile  Rakefile~  passwd  userlist
+
+Yes!  Success!
+
+h3. Step 2: Cleaning up Your Act
+
+As you see from our directory listing, we have some garbage files lying around.  Files that end in "~" are backup files created by our editor. It would be nice to have a simple way to clean them up.  We can create a :clean target like this ...
+
+<pre>
+  CLEAN_FILES = FileList['*~']
+  CLEAN_FILES.clear_exclude
+  task :clean do
+    rm CLEAN_FILES
+  end
+</pre>
+
+A FileList is a list of files in Rake.  FileList""s can be easily created using the FileList[<em>list_of_patterns</em>] expression.  This is equivalent to:
+
+  filelist = FileList.new
+  filelist.include(<em>list_of_patterns</em>)
+
+One small wrinkle:  notice the <tt>clear_exclude</tt> call just before the :clean task?  FileList""s will automatically ignore files that end in "~", ".bak", or are named "core", or have a "CVS" in the directory path.  Most of the time this is good, most tasks aren't interested in these temporary files.  But in this case it is the temporary files we wish to deal with.  So we need to clear the list of excluded files, hence the <tt>clear_exclude</tt> call.
+
+h3. The Built-in Clean Task
+
+Rake has a built-in clean task.  All you need to do is require the clean file.  If you want to add additional patterns to the clean list, just include them on the <tt>CLEAN</tt> file list.
+
+<pre>
+  require 'rake/clean'
+  CLEAN.include("**/*.temp")
+</pre>
+
+Notice the double star "**" in the pattern above.  That will recursively search all subdirectories for files ending in ".temp".
+
+h3. The Built-in Clobber Task
+
+While the clean task will get rid of temporary files, sometimes you want a more powerfull cleanning action, one that will take your project back to its pristine state before <em>any</em> files are generated.  I use the <tt>clobber</tt> task for this.
+
+<tt>clobber</tt> is also defined in the "rake/clean" library that comes with rake.  And like <tt>clean</tt>, you can add files and patterns to the <tt>CLOBBER</tt> file list.
+
+Here is our Rakefile up to this point.  I've taken the liberty of moving the <tt>read_users</tt> and <tt>read_passwords</tt> functions to a utility library just to get them out of the way.  The "passwd" file gets added to the <tt>CLOBBER</tt> list since can be generated from our user list.
+
+<pre>
+# -*- ruby -*-
+
+require "rake/clean"
+require 'utility'
+
+CLOBBER.include("passwd")
+
+file "passwd" => ["userlist"] do
+  passwords = read_passwords
+  users = read_users("userlist")
+  open("passwd", "w") do |outs|
+    users.each do |user|
+      outs.puts "#{user}:#{passwords[user]}:cvs"
+    end
+  end
+end
+</pre>
+
+h3. Step 3: Deploying the Files
+
+Now that we can generate a "passwd" file at will, we need to make sure that the file gets copied to the right location.  We have three CVS repositories, but let's concentrate on one first.
+
+First we define some constants to make the rest of the task easier.  This is the repository for "groupa", so take note of the "groupa" in the target directory path. 
+
+<pre>
+TARGETDIR = '/share/cvs/groupa/CVSROOT'
+TARGETFILE = File.join(TARGETDIR, "passwd")
+</pre>
+
+Now we create a file task for TARGETFILE, and make it depend upon "passwd" (i.e. whenever "passwd" changes, we need to run the TARGETFILE task).  First we make sure the target directory exists (this is probably not needed, but let's be safe).  Then we copy the "passwd" file to the target file.
+
+<pre>
+file TARGETFILE => ["passwd"] do
+  mkdir_p TARGETDIR
+  cp "passwd", TARGETFILE
+end
+</pre>
+
+We can test this by running rake with the TARGETFILE task.  Unfortunately, the command line doesn't know about our TARGETFILE constant, so we have to spell the file name out.
+
+<pre>
+$ rake /share/cvs/groupa/CVSROOT/passwd
+(in /home/jim/pgm/misc/cvsusers)
+mkdir -p /share/cvs/groupa/CVSROOT
+cp passwd /share/cvs/groupa/CVSROOT/passwd
+</pre>
+
+That's cool!  It works.  But it handles only one of the repositories, there are two more to go.
+
+A simple approach would be to duplicate the file command two more times for something like this ...
+
+<pre>
+TARGETDIRA = '/share/cvs/groupa/CVSROOT'
+TARGETFILEA = File.join(TARGETDIRA, "passwd")
+
+file TARGETFILEA => ["passwd"] do
+  mkdir_p TARGETDIRA
+  cp "passwd", TARGETFILEA
+end
+
+TARGETDIRB = '/share/cvs/groupb/CVSROOT'
+TARGETFILEB = File.join(TARGETDIRB, "passwd")
+
+file TARGETFILEB => ["passwd"] do
+  mkdir_p TARGETDIRB
+  cp "passwd", TARGETFILEB
+end
+
+TARGETDIRC = '/share/cvs/groupc/CVSROOT'
+TARGETFILEC = File.join(TARGETDIRC, "passwd")
+
+file TARGETFILEA => ["passwd"] do
+  mkdir_p TARGETDIRC
+  cp "passwd", TARGETFILEC
+end
+</pre>
+
+Yuck.  That's a lot of duplication with a strong possibility for error.  Let's avoid the duplication by creating the file tasks in a loop ...
+
+<pre>
+GROUPS = %w(groupa groupb groupc)
+GROUPS.each do |group|
+  targetdir = "/share/cvs/#{group}/CVSROOT"
+  targetfile = File.join(targetdir, "passwd")
+
+  file targetfile => ["passwd"] do
+    mkdir_p targetdir
+    cp "passwd", targetfile
+  end
+
+  task :deploy => [targetfile]
+end
+</pre>
+
+We put the groups in a list.  Then we loop over the group names and generate the targetdir and targetfile variables for each group.  The file task is identical to the previous version, except that it uses the variables calculated in the loop rather than the constant calculated for a single group.
+
+As a final touch, we introduce a task named <tt>:deploy</tt>.  Each time through the loop, <tt>:deploy</tt> is made to be dependent on each of the target files.  Rake tasks are additive. Each time they are mentioned in a file, the dependents and actions are added to the existing task definition.
+
+Now, instead of asking for each deployed target file individually, I can request all of them at once using the <tt>:deploy</tt> task.  I like that.
+
+Trying out our deploy task gives the following:
+
+<pre>
+$ touch passwd
+$ rake deploy
+(in /home/jim/pgm/misc/cvsusers)
+mkdir -p /share/cvs/groupa/CVSROOT
+cp passwd /share/cvs/groupa/CVSROOT/passwd
+mkdir -p /share/cvs/groupb/CVSROOT
+cp passwd /share/cvs/groupb/CVSROOT/passwd
+mkdir -p /share/cvs/groupc/CVSROOT
+cp passwd /share/cvs/groupc/CVSROOT/passwd
+</pre>
+
+We are about done.  Let's just make a few final adjustments.
+
+h3. Step 4: Some Final Touches
+
+If rake is invoked without any tasks, then it looks for a default task to run.  We need to provide that default task.  The <tt>:deploy</tt> task seems to be a good choice.
+
+  task :default => [:deploy]
+
+Also, rake is willing to provide a description of each task, but only if you describe the task to rake.  Use the <tt>desc</tt> command to provide the description.  Here is an example on the <tt>:deploy</tt> task.
+
+  desc "Deploy the generated passwd file to each of the repositories"
+  task :deploy
+
+After adding descriptions, we can run rake with the <tt>-T</tt> flag.
+
+<pre>
+$ rake -T
+(in /home/jim/pgm/misc/cvsusers)
+rake clean    # Remove any temporary products.
+rake clobber  # Remove any generated file.
+rake default  # Default task deploys the password files
+rake deploy   # Deploy the generated passwd file to each of the repositories
+rake passwd   # Generate the passwd file from the user list
+</pre>
+
+And now, the final form of our Rakefile:
+
+<pre>
+# -*- ruby -*-
+
+require "rake/clean"
+require 'utility'
+
+CLOBBER.include("passwd")
+
+desc "Default task deploys the password files"
+task :default => [:deploy]
+
+desc "Generate the passwd file from the user list"
+file "passwd" => ["userlist"] do
+  passwords = read_passwords
+  users = read_users("userlist")
+  open("passwd", "w") do |outs|
+    users.each do |user|
+      outs.puts "#{user}:#{passwords[user]}:cvs"
+    end
+  end
+end
+
+
+desc "Deploy the generated passwd file to each of the repositories"
+task :deploy
+
+GROUPS = %w(groupa groupb groupc)
+GROUPS.each do |group|
+  targetdir = "/share/cvs/#{group}/CVSROOT"
+  targetfile = File.join(targetdir, "passwd")
+
+  file targetfile => ["passwd"] do
+    mkdir_p targetdir
+    cp "passwd", targetfile
+  end
+
+  task :deploy => [targetfile]
+end
+</pre>

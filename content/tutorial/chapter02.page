@@ -1,0 +1,65 @@
+---
+title: 02 -- Managing Files with FileLists
+inMenu: true
+orderInfo: 20
+---
+
+h2. Chapter 2 -- Managing Files with FileLists
+
+
+h3. Handling Common Actions
+
+p((. <em>Rake is a tool for controlling builds.  In this part of the Rake tutorial, we see how to organize the Rake actions to apply to many similar tasks. </em>
+
+p((. In the previous chapter, we talked about the basics of specifying dependencies and associating actions to build the files. We ended up with a nice Rakefile that built our simple C program, but with some duplication in the build rules.
+
+
+h3. But First, Some Extra Rake Targets
+
+But before we get into all that, lets add some convience targets to our Rakefile.  First of all, it would be nice to have a default target that is invoked when we don't give any explicit task names to rake. The default target looks like this:
+
+*Rakefile Fragment*
+{includeFile: {filename: code/02/Rakefile1, highlight: ruby, escapeHTML: false}}
+
+Until now, the only kind of task we have seen in Rake are _file_ tasks.  File tasks are knowledgable about time stamps on files.  A file task will not execute its action unless the file it represents doesn't exist, or is older than any of its prerequisites.
+
+A non-file task (or just plain "task") does not represent the creation of a file.  Since there is no timestamp for comparison, non-file tasks _always_ execute their actions (if they have any).  Since the _default_ task does not represent a file named "default", we use a regular non-file task for this purpose.  Non-file tasks just use the @task@ keyword (instead of the @file@ keyword).
+
+Here are a couple of other really useful tasks that I almost always include in a Rakefile.
+
+*@clean@:*
+bq. Remove temporary files created during the build process.
+
+*@clobber@:*
+bq. Remove *all* files generated during the build process.
+
+@clean@ tidies up the directories and removes any files that generated as part of the build process, but are not the final goal of the build process.  For example, the @.o@ files used to link up the final executable hello program would fall in this category.  After the executable program is built, the @.o@ files are no longer needed and will be removed by saying "<tt>rake clean</tt>". 
+
+@clobber@ is like @clean@, but even more aggressive.  "<tt>rake clobber</tt>" will remove all files that are not part of the original package.  It should return a project to the "just checked out of CVS" state.  So it removes the final executable program as well as the files removed by @clean@.
+
+In fact, these tasks are so common, Rake comes with a predefined library that implements @clean@ and @clobber@.
+
+But every project is different, how do we specify _which_ files are to be cleaned and clobbered on a per project basis?
+
+The answer is File lists.
+
+h3. File Lists to the Rescue
+
+A file list is simply a list of file names.  Since a lot of what Rake does involves files and lists of those files, a file list has some special features to make manipulating file names rather easy.
+
+Suppose you want a list of all the C files in your project.  You could add this to your rake file:
+
+*Rakefile Fragment*
+{includeFile: {filename: code/02/Rakefile2, highlight: plaintext, escapeHTML: false}}
+
+This will collect all the files ending in ".c" in the top level directory of your project.  File lists understand glob patterns (i.e. things like =="*.c"==) and will find all the matching files.
+
+By the way, no matter where you invoke it, @rake@ always executes in the directory where the Rakefile is found.  This keeps your path names consistent without depending on the current directory the user interactive shell.
+
+The @clean@ and @clobber@ tasks use file lists to manage the files to remove.  So if we want to clean up all the @.o@ files in a project we could try ...
+
+*Rakefile Fragment*
+{includeFile: {filename: code/02/Rakefile3, highlight: plaintext, escapeHTML: false}}
+
+(@CLEAN@ is the file list associated with the @clean@ task.  I'll let you guess the name of the file list associated with @clobber@).
+

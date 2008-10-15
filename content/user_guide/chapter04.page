@@ -1,0 +1,58 @@
+---
+title: 04 -- Frequently Asked Questions
+inMenu: true
+---
+
+h2. Chapter 4 -- Frequently Asked Questions
+
+h3. How can I call one Rake task from inside another task?
+
+Generally, if you want invoke one task from another task, the proper way to do that is to include the task to be invoked as a prerequisite of the task doing the invoking.
+
+For example:
+
+<pre>
+  task :primary => [:secondary]
+
+  task :secondary do
+    puts "Doing Secondary Task"
+  end
+</pre>
+
+However, there are certain rare occasions where you want to invoke a task from within the body of a primary task.  You could do it like this:
+
+<pre>
+  task :primary do
+    Rake::Task[:secondary].invoke
+  end
+
+  task :secondary do
+    puts "Doing Secondary Task"
+  end
+</pre>
+
+Keep the following in mind:
+
+* The secondary task will be invoked when the body of the primary task is executed.  
+* All prerequisites of the secondary task will be run before it body of the secondary task.  
+* If the secondary task has already been run, it will not be run again, even though it has been explicitly invoked.  Rake tasks can only be invoked once per run.
+ 
+If the second and third point above are not to your liking, then perhaps you should consider making the secondary task a regular Ruby method and just calling it directly.  Something like this:
+
+<pre>
+  task :primary do
+    secondary_task
+  end
+
+  task :secondary do
+    secondary_task
+  end
+
+  def secondary_task
+    puts "Doing Secondary Task"
+  end
+</pre>
+
+
+
+  

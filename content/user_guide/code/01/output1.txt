@@ -1,0 +1,3 @@
+$ build.sh
+$ ./hello
+Hello, World

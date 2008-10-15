@@ -1,0 +1,2 @@
+class Happy
+end

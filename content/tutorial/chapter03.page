@@ -1,0 +1,46 @@
+---
+title: 03 -- Reducing Duplication with Rules
+inMenu: true
+orderInfo: 30
+---
+
+h2. Chapter 3 -- Reducing Duplication with Rules
+
+h3. Dynamically Building Tasks
+
+The command to compile the <tt>main.c</tt> and <tt>greet.c</tt> files is identical, except for the name of the files involved.  The simpliest and most direct way to address the problem is to define the compile task in a loop.  Perhaps something like this ...
+
+*Rakefile Fragment*
+{includeFile: {filename: code/03/Rakefile1, highlight: ruby, escapeHTML: false}}
+
+Just a couple things to note about the above code.
+
+* The dependencies are not specified.  This is a common where we specify the dependents at one place and the actions in another.  Rake is smart enough to combine the dependencies with the actions. 
+* Although the task was named after the @.o@ (which is, after all, what we want to generate), the file list is defined in terms of the @.c@ files.  Why?
+
+p(.  The simple reason is that file lists search for file names that exist in the file system.  We have no guarantee that the @.o@ files even exist at this point (indeed, the will not after invoking the @clean@ task).  The @.c@ are source and will always be there.
+
+
+h3. Rake Can Automatically Generate Tasks
+
+Defining tasks in a loop is pretty cool, but is really not needed in a number of simple cases.  Rake can automatically generate file based tasks according to some simple pattern matching rules.
+
+For example, we can capture the above logic in a single rule ... no need to find all the source files and iterate through them.
+
+
+*Rakefile Fragment*
+{includeFile: {filename: code/03/Rakefile2, highlight: ruby, escapeHTML: false}}
+
+The above rule says that if you want to generate a file ending in @.o@, then you if you have a file with the same base name, but ending in @.c@, then you can generate the @.o@ from the @.c@.
+
+<tt>t.name</tt> is the name of the task, and in file based tasks will be the name of the file we are trying to generate.  <tt>t.source</tt> is the name of the source file, i.e. the one that matches the second have of the rule pattern.  <tt>t.source</tt> is only valid in the body of a rule.
+
+Rules are actually much more flexible than you are led to believe here.  But that's an advanced topic that we will save for another day.
+
+
+h3. Final Rakefile
+
+Here is our final resule.  Notice how we use the @SRC@ and @OBJ@ file lists to manage our lists of scource files and object files.
+
+*Rakefile*
+{includeFile: {filename: code/03/Rakefile3, highlight: ruby, escapeHTML: false}}

@@ -1,0 +1,8 @@
+$ emacs greet.c
+$ rake hello
+(in /home/jim/pgm/rake/intro)
+cc -c -o greet.o greet.c
+cc -o hello main.o greet.o
+$
+$ ./hello
+Hi, World

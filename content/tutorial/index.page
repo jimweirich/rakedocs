@@ -1,0 +1,45 @@
+---
+title: Rake Tutorial
+filter:
+  - erb
+  - textile
+---
+
+h1. Rake Tutorial
+
+Rake is a build tool, written in Ruby, using Ruby as a build language.  Rake is similar to make in scope and purpose.
+Rake a simple ruby build program with capabilities similar to make.
+
+Rake has the following features:
+
+* Rakefiles (rake's version of Makefiles) are completely defined in standard Ruby syntax. No XML files to edit. No quirky Makefile syntax to worry about (is that a tab or a space?)
+* Users can specify tasks with prerequisites.
+* Rake supports rule patterns to sythesize implicit tasks.
+* Rake is lightweight. It can be distributed with other projects as a single file. Projects that depend upon rake do not require that rake be installed on target systems.
+
+h3. Copyright
+
+Copyright &copy; 2005, by "Jim Weirich":mailto:jim@weirichhouse.org, Some rights reserved.
+
+|<em>This work is licensed under a "Creative Commons Attribution-NonCommercial 2.5 License":http://creativecommons.org/licenses/by-nc/2.5/.</em>|!http://creativecommons.org/images/public/somerights20.gif!:http://creativecommons.org/licenses/by-nc/2.5/|
+
+
+<rdf:RDF xmlns="http://web.resource.org/cc/"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<Work rdf:about="">
+   <dc:type rdf:resource="http://purl.org/dc/dcmitype/Text" />
+   <license rdf:resource="http://creativecommons.org/licenses/by-nc/2.5/" />
+</Work>
+
+<License rdf:about="http://creativecommons.org/licenses/by-nc/2.5/">
+   <permits rdf:resource="http://web.resource.org/cc/Reproduction" />
+   <permits rdf:resource="http://web.resource.org/cc/Distribution" />
+   <requires rdf:resource="http://web.resource.org/cc/Notice" />
+   <requires rdf:resource="http://web.resource.org/cc/Attribution" />
+   <prohibits rdf:resource="http://web.resource.org/cc/CommercialUse" />
+   <permits rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
+</License>
+
+</rdf:RDF>
+

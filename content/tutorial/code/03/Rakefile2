@@ -1,0 +1,3 @@
+rule '.o' => '.c' do |t|
+  sh "cc -c -o #{t.name} #{t.source}"
+end

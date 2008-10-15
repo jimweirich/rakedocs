@@ -1,0 +1,37 @@
+---
+title: User Guide
+inMenu: false
+orderInfo: 1
+DirectoryName: User Guide
+---
+
+h1. Rake by Example
+
+Introduce Rake via using a simple examples.
+The best way to understand Rake is to see it in action.  This book will cover some simple applications of the the Rake program.
+
+h3. Copyright
+
+Copyright &copy; 2005, by "Jim Weirich":mailto:jim@weirichhouse.org, Some rights reserved.
+
+|<em>This work is licensed under a "Creative Commons Attribution-NonCommercial 2.5 License":http://creativecommons.org/licenses/by-nc/2.5/.</em>|!http://creativecommons.org/images/public/somerights20.gif!:http://creativecommons.org/licenses/by-nc/2.5/|
+
+
+<rdf:RDF xmlns="http://web.resource.org/cc/"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<Work rdf:about="">
+   <dc:type rdf:resource="http://purl.org/dc/dcmitype/Text" />
+   <license rdf:resource="http://creativecommons.org/licenses/by-nc/2.5/" />
+</Work>
+
+<License rdf:about="http://creativecommons.org/licenses/by-nc/2.5/">
+   <permits rdf:resource="http://web.resource.org/cc/Reproduction" />
+   <permits rdf:resource="http://web.resource.org/cc/Distribution" />
+   <requires rdf:resource="http://web.resource.org/cc/Notice" />
+   <requires rdf:resource="http://web.resource.org/cc/Attribution" />
+   <prohibits rdf:resource="http://web.resource.org/cc/CommercialUse" />
+   <permits rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
+</License>
+
+</rdf:RDF>

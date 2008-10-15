@@ -1,0 +1,7 @@
+SRC = FileList['*.c']
+SRC.each do |fn|
+  obj = fn.sub(/\.[^.]*$/, '.o')
+  file obj  do
+    sh "cc -c -o #{obj} #{fn}"
+  end
+end

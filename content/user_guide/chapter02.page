@@ -1,0 +1,75 @@
+---
+title: 02 -- Command Line Invocation
+inMenu: true
+---
+
+h2. Chapter 2 -- Command Line Invocation
+
+
+h3. Usage
+
+Rake is invoked from the command line using:
+
+   % rake [<em>options</em> ...]  [<em>VAR</em>=<em>VALUE</em>]  [<em>targets</em> ...]
+
+Options are:
+
+<tt><em>name</em>=<em>value</em></tt>
+
+p(. Set the environment variable <em>name</em> to <em>value</em> during the execution of the <b>rake</b> command.  You can access the value by using <tt>ENV['_name_']</tt>. 
+
+<tt>--classic-namespace</tt>  (-C)
+
+p(. Put Task and FileTask in the top level namespace
+
+<tt>--dry-run</tt> (-n)
+
+p(. Do a dry run.  Print the tasks invoked and executed, but do not actually execute any of the actions.
+
+<tt>--help</tt>  (-H)
+
+p(. Display some help text and exit.
+
+<tt>--libdir</tt> _directory_  (-I)
+
+p(. Add _directory_ to the list of directories searched for require.
+
+<tt>--nosearch</tt>  (-N)
+
+p(. Do not search for a Rakefile in parent directories.
+
+<tt>--prereqs</tt>  (-P)
+
+p(. Display a list of all tasks and their immediate prerequisites.
+
+<tt>--quiet</tt> (-q)
+
+p(. Do not echo commands from FileUtils.
+
+<tt>--rakefile</tt> _filename_ (-f)
+
+p(. Use _filename_ as the name of the rakefile.  The default rakefile names are @rakefile@ and @Rakefile@ (with @rakefile@ taking precedence).  If the rakefile is not found in the current directory, @rake@ will search parent directories for a match.  The directory where the Rakefile is found will become the current directory for the actions executed in the Rakefile.
+
+<tt>--require</tt> _name_ (-r)
+
+p(. Require _name_ before executing the Rakefile.
+
+<tt>--tasks</tt> (-T)
+
+p(. Display a list of the major tasks and their comments.  Comments are defined using the "desc" command.
+
+<tt>--trace</tt> (-t)
+
+p(. Turn on invoke/execute tracing.  Also enable full backtrace on errors.
+
+<tt>--usage</tt> (-h)
+
+p(. Display a usage message and exit.
+
+<tt>--verbose</tt> (-v)
+
+p(. Echo the Sys commands to standard output.
+
+<tt>--version</tt> (-V)
+
+p(. Display the program version and exit.
