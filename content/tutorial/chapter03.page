@@ -18,7 +18,7 @@ Just a couple things to note about the above code.
 * The dependencies are not specified.  This is a common where we specify the dependents at one place and the actions in another.  Rake is smart enough to combine the dependencies with the actions. 
 * Although the task was named after the @.o@ (which is, after all, what we want to generate), the file list is defined in terms of the @.c@ files.  Why?
 
-p(.  The simple reason is that file lists search for file names that exist in the file system.  We have no guarantee that the @.o@ files even exist at this point (indeed, the will not after invoking the @clean@ task).  The @.c@ are source and will always be there.
+p(.  The simple reason is that file lists search for file names that exist in the file system.  We have no guarantee that the @.o@ files even exist at this point (indeed, they will not after invoking the @clean@ task).  The @.c@ are source and will always be there.
 
 
 h3. Rake Can Automatically Generate Tasks
